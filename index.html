@@ -1,551 +1,986 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prank Hub Deluxe ⭐</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico" /> <!-- Replace "favicon.ico" with your custom icon file name -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prank Hub Deluxe 🎭</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    .emoji-button:hover {
-      transform: scale(1.2);
-      transition: transform 0.15s;
+    /* General button styles */
+button {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+  user-select: none;
+}
+
+/* Send Button (🚀 Send Prank) */
+#sendBtn:hover {
+  animation: sendBounce 0.7s ease-in-out infinite alternate;
+  box-shadow: 0 0 12px 2px #6366f1;
+  transform-origin: center;
+}
+@keyframes sendBounce {
+  0% { transform: translateY(0) scale(1); box-shadow: 0 0 8px 1px #6366f1; }
+  100% { transform: translateY(-6px) scale(1.05); box-shadow: 0 0 18px 4px #818cf8; }
+}
+
+/* Clear Button (🗑️ Clear Form) */
+#clearBtn:hover {
+  animation: shake 0.3s ease-in-out;
+  box-shadow: 0 0 10px 2px #ef4444;
+  transform-origin: center;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px) rotate(-5deg); }
+  50% { transform: translateX(6px) rotate(5deg); }
+  75% { transform: translateX(-6px) rotate(-5deg); }
+}
+
+/* Spam Toggle already has pulse, add subtle bounce on hover */
+#spamToggle:hover {
+  animation: pulse-red 1.2s infinite alternate, spamBounce 0.8s ease-in-out infinite alternate;
+}
+@keyframes spamBounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-4px) scale(1.02); }
+}
+
+/* Test Webhook Button */
+#testWebhook {
+  transition: all 0.15s ease-in-out;
+}
+#testWebhook:active {
+  transform: scale(0.9);
+  background-color: #4338ca;
+  box-shadow: 0 0 8px 2px #4338ca;
+}
+
+/* Upload Buttons */
+#avatarUploadBtn, #imageUploadBtn {
+  transition: transform 0.15s ease, background-color 0.3s ease;
+}
+#avatarUploadBtn:hover, #imageUploadBtn:hover {
+  background-color: #4338ca;
+  transform: scale(1.1);
+}
+
+/* Emoji Toggle Buttons */
+#emojiToggleMessage, #emojiToggleEmbed {
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+}
+#emojiToggleMessage:active, #emojiToggleEmbed:active {
+  transform: scale(1.3) rotate(10deg);
+  box-shadow: 0 0 8px 2px #6366f1;
+}
+
+/* Emoji favorite star hover */
+.emoji-fav-star:hover {
+  color: #facc15 !important; /* golden bright */
+  transform: scale(1.4);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+    /* Loader animation */
+    .loader {
+      border: 3px solid #ffffff;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
     }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* High Contrast Mode */
+    .high-contrast {
+      background-color: #000 !important;
+      color: #fff !important;
+      border-color: #fff !important;
+    }
+    .high-contrast input,
+    .high-contrast textarea,
+    .high-contrast button {
+      background-color: #222 !important;
+      color: #fff !important;
+      border-color: #fff !important;
+    }
+    /* Responsive emoji picker for mobile */
+    @media (max-width: 640px) {
+      #emojiBox {
+        max-width: 100%;
+        width: 90%;
+        left: 5% !important;
+        top: auto !important;
+        bottom: 10px;
+      }
+    }
+    /* Emoji picker styling */
     #emojiBox {
-      max-width: 600px;
-      min-height: 250px;
-      max-height: 400px;
+      position: absolute;
+      background: #1f2937; /* dark bg */
+      border-radius: 0.75rem;
+      padding: 1rem;
+      max-width: 360px;
+      max-height: 360px;
       overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #888 #fff;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 1000;
+      font-size: 1.8rem;
+      user-select: none;
+      transition: transform 0.2s ease, opacity 0.3s ease;
     }
-    .bounce {
-      animation: bounce 0.3s ease;
+    #emojiBox.show {
+      display: block;
+      transform: scale(1);
+      opacity: 1;
     }
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+    #emojiBox.hide {
+      transform: scale(0.9);
+      opacity: 0;
+      pointer-events: none;
     }
-    .theme-transition {
-      transition: background-color 0.3s, color 0.3s;
+    #emojiBox button {
+      margin: 0.2rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: 0.35rem;
+      padding: 0.15rem 0.3rem;
+      transition: background-color 0.15s ease, transform 0.15s ease;
+      user-select: none;
+    }
+    #emojiBox button:hover {
+      background-color: #4f46e5;
+      color: white;
+      transform: scale(1.3);
+    }
+    #emojiBox button:focus-visible {
+      outline: 2px solid #4f46e5;
+    }
+    /* Emoji categories container */
+    #emojiCategories {
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    #emojiCategories button {
+      padding: 0.3rem 0.7rem;
+      font-size: 1rem;
+      background-color: #374151;
+      color: #d1d5db;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    #emojiCategories button.active {
+      background-color: #6366f1;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 0 8px #6366f1;
+    }
+    #emojiCategories button:hover:not(.active) {
+      background-color: #4b5563;
+      color: white;
+    }
+    /* Favorite star toggle */
+    .emoji-fav-star {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: transparent;
+      border: none;
+      color: #fbbf24;
+      font-size: 1.2rem;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+    .emoji-fav-star.inactive {
+      color: #999;
+    }
+    /* Emoji button container */
+    .emoji-btn-container {
+      position: relative;
+      display: inline-block;
+      margin: 0 0.3rem 0.3rem 0;
+    }
+    /* Image previews */
+    .preview-img {
+      max-height: 48px;
+      max-width: 48px;
+      border-radius: 0.375rem;
+      object-fit: cover;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+      border: 2px solid #4f46e5;
+      position: relative;
+    }
+    /* Clear buttons for previews */
+    .clear-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      border-radius: 9999px;
+      width: 20px;
+      height: 20px;
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
+    .preview-container {
+      position: relative;
+      display: inline-block;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    /* Emoji buttons container styling */
+    .emoji-button-container {
+      margin-top: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: flex-start;
+    }
+    /* Spam mode toggle styling */
+    #spamToggle {
+      margin-top: 12px;
+      padding: 0.5rem 1rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      box-shadow: 0 0 10px #dc2626;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s ease, box-shadow 0.5s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #spamToggle.spam-active {
+      animation: pulse-red 1.2s infinite alternate;
+      box-shadow: 0 0 15px 5px #f87171;
+    }
+    @keyframes pulse-red {
+      0% {
+        box-shadow: 0 0 10px #dc2626;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+      }
+      100% {
+        box-shadow: 0 0 20px #f87171;
+        background: linear-gradient(135deg, #f87171, #b91c1c);
+      }
+    }
+    #spamToggle svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+      animation: spin 2s linear infinite;
+      display: none;
+    }
+    #spamToggle.spam-active svg {
+      display: inline-block;
     }
   </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-8 font-sans theme-transition" id="themeBody">
-  <div>
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold">⭐ Prank Hub Deluxe</h1>
-      <button id="themeToggle" class="p-4 rounded-full bg-gray-700 hover:bg-gray-600" title="Toggle Theme">
-        🌙
-      </button>
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white relative" id="themeBody">
+
+<div class="max-w-xl mx-auto p-6 space-y-6 relative">
+  <h1 class="text-4xl font-extrabold text-center mb-6">Prank Hub Deluxe 🎭</h1>
+  
+  <!-- Webhook URL + Test -->
+  <div class="flex items-center space-x-2">
+    <input
+      type="text"
+      id="webhookURL"
+      aria-label="Discord webhook URL"
+      placeholder="Enter Discord webhook URL"
+      class="flex-grow p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+    />
+    <button
+      id="testWebhook"
+      class="p-4 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold"
+      aria-label="Test webhook URL"
+    >🔍 Test Webhook</button>
+  </div>
+  
+  <!-- Username & Avatar URL + Upload -->
+  <div class="grid grid-cols-2 gap-4 items-center">
+    <div>
+      <input
+        type="text"
+        id="username"
+        placeholder="Username (optional)"
+        aria-label="Username"
+        class="w-full p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+      />
     </div>
-
-    <div class="space-y-6">
-      <div>
-        <label class="block text-base font-medium mb-2">Webhook URL</label>
-        <input type="text" id="webhookURL" placeholder="Paste your webhook URL here" 
-               class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
-      </div>
-
-      <div>
-        <label class="block text-base font-medium mb-2">Username (optional)</label>
-        <input type="text" id="username" placeholder="Name for the prankster bot" 
-               class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
-      </div>
-
-      <div>
-        <label class="block text-base font-medium mb-2">Avatar URL (optional)</label>
-        <div class="flex gap-4 w-full">
-          <input type="text" id="avatarURL" placeholder="Link to profile picture" 
-                 class="flex-grow p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
-          <label for="avatarUploadInput" class="cursor-pointer p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-center h-12 flex items-center justify-center">
-            📁
-          </label>
-        </div>
-        <input type="file" id="avatarUploadInput" accept="image/*" class="hidden" />
-        <img id="avatarPreview" class="mt-4 max-w-full h-32 rounded-lg hidden" />
-      </div>
-
-      <div>
-        <label class="block text-base font-medium mb-2">Message Content</label>
-        <textarea id="messageContent" placeholder="Type your prank here..." 
-                  class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-40 resize-none"></textarea>
-        <button id="emojiToggle" class="mt-4 p-4 rounded-lg bg-gray-700 hover:bg-gray-600 text-xl">😊 Emoji</button>
-        <div id="emojiBox" class="hidden absolute rounded-lg shadow-lg p-6 z-20 max-w-sm theme-transition" data-theme="dark">
-          <input type="text" id="emojiSearch" placeholder="Search emojis..." 
-                 class="w-full p-3 rounded-lg border mb-4 h-12" />
-          <div id="categoryTabs" class="text-base mb-4"></div>
-          <div id="emojiList" class="flex flex-row flex-wrap"></div>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-base font-medium mb-2">Image URL (optional)</label>
-        <div class="flex gap-4 w-full">
-          <input type="text" id="imageURL" placeholder="Paste image URL here" 
-                 class="flex-grow p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
-          <label for="uploadInput" class="cursor-pointer p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-center h-12 flex items-center justify-center">
-            📁
-          </label>
-        </div>
-        <input type="file" id="uploadInput" accept="image/*" class="hidden" />
-        <img id="imagePreview" class="mt-4 max-w-full h-64 rounded-lg hidden" />
-      </div>
-
-      <button id="sendBtn" class="w-full p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-xl">
-        🚀 Send Prank
-      </button>
-
-      <div id="status" class="text-base"></div>
-
-      <div class="mt-8">
-        <h2 class="text-2xl font-semibold">Message History</h2>
-        <div id="messageHistory" class="mt-4 space-y-4 max-h-80 overflow-y-auto"></div>
+    <div class="flex items-center space-x-2">
+      <input
+        type="text"
+        id="avatarURL"
+        placeholder="Avatar URL (optional)"
+        aria-label="Avatar URL"
+        class="flex-grow p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+      />
+      <input
+        type="file"
+        id="avatarUpload"
+        accept="image/*"
+        aria-label="Upload avatar image"
+        class="hidden"
+      />
+      <button
+        id="avatarUploadBtn"
+        class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white"
+        aria-label="Upload avatar image"
+      >📤</button>
+      
+      <div class="preview-container" id="avatarPreviewContainer" style="display:none;">
+        <img id="avatarPreview" class="preview-img" alt="Avatar Preview" />
+        <div class="clear-btn" id="clearAvatarBtn" title="Remove avatar image">×</div>
       </div>
     </div>
-
-    <audio id="clickSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
-    <audio id="sendSound" src="https://freesound.org/data/previews/256/256120_3263906-lq.mp3"></audio>
   </div>
 
-  <script>
-    const imgbbApiKey = 'db63980b68f6c4c526f3388f74d0b16a'; // Provided imgbb API key
+  <!-- Message Content -->
+  <label for="messageContent" class="block font-semibold mb-1">Message Content</label>
+  <textarea
+    id="messageContent"
+    aria-label="Message content"
+    rows="5"
+    maxlength="2000"
+    placeholder="Write your prank message here..."
+    class="w-full p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+  ></textarea>
 
-    const emojis = {
-      Smileys: ["😀", "😂", "😍", "😎", "😢", "😈", "🥳", "🤓", "😜", "😡", "😊", "😉", "😘", "🤗", "😴", "🤪", "😬", "😷"],
-      Animals: ["🐶", "🐱", "🦁", "🐘", "🦒", "🐻", "🦊", "🐸", "🐵", "🦄", "🐷", "🐼", "🐨", "🐰", "🦓", "🐮", "🐴", "🐦"],
-      Objects: ["🎉", "💡", "📱", "💻", "🎮", "📷", "🎸", "🚗", "✈️", "🔥", "🪩", "🎁", "🎈", "📚", "🖌️", "🔧", "⚙️", "🔔"],
-      Food: ["🍕", "🍔", "🍟", "🍦", "🍎", "🍉", "🍫", "🍿", "🍣", "🥐", "🍰", "🥞", "🍜", "🥗", "🍎", "🍒", "🍓"],
-      Symbols: ["✅", "❌", "❓", "⚠️", "🚫", "🔄", "💯", "⭐", "🎯", "🔮", "➡️", "⬅️", "⬆️", "⬇️", "🔒", "🔓", "❤️", "💔"],
-      Activities: ["⚽", "🏀", "🎾", "🏈", "🎳", "🎯", "🎸", "🎨", "🎭", "🎲", "🏋️", "🚴", "🏄", "🎿", "🏊", "🧘", "🎤", "🎬"]
+  <!-- Emoji button for message -->
+  <div class="emoji-button-container">
+    <button
+      id="emojiToggleMessage"
+      class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white"
+      aria-label="Toggle emoji picker for message"
+      title="Toggle emoji picker for message (Ctrl+E)"
+    >😄</button>
+  </div>
+
+  <!-- Image URL + Upload -->
+  <div class="flex items-center mt-4 space-x-2">
+    <input
+      type="text"
+      id="imageURL"
+      aria-label="Image URL"
+      placeholder="Image URL for embed (optional)"
+      class="flex-grow p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+    />
+    <input
+      type="file"
+      id="imageUpload"
+      accept="image/*"
+      aria-label="Upload image"
+      class="hidden"
+    />
+    <button
+      id="imageUploadBtn"
+      class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white"
+      aria-label="Upload image"
+    >📤</button>
+
+    <div class="preview-container" id="imagePreviewContainer" style="display:none;">
+      <img id="imagePreview" class="preview-img" alt="Image Preview" />
+      <div class="clear-btn" id="clearImageBtn" title="Remove embed image">×</div>
+    </div>
+  </div>
+
+  <!-- Embed Options -->
+  <div class="mt-4 space-y-2">
+    <label class="block text-base font-medium">Embed Options (optional)</label>
+    <input
+      type="text"
+      id="embedTitle"
+      placeholder="Embed title"
+      aria-label="Embed title"
+      class="w-full p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+    />
+    <textarea
+      id="embedDescription"
+      placeholder="Embed description"
+      aria-label="Embed description"
+      rows="4"
+      class="w-full p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+    ></textarea>
+
+    <!-- Emoji button for embed description -->
+    <div class="emoji-button-container">
+      <button
+        id="emojiToggleEmbed"
+        class="p-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white"
+        aria-label="Toggle emoji picker for embed description"
+        title="Toggle emoji picker for embed description"
+      >😄</button>
+    </div>
+
+    <input
+      type="color"
+      id="embedColor"
+      aria-label="Embed color"
+      value="#5865F2"
+      class="w-16 h-12 p-1 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700"
+    />
+  </div>
+
+  <!-- Schedule Prank -->
+  <div class="mt-4">
+    <label for="scheduleTime" class="block text-base font-medium mb-2">Schedule Prank (optional)</label>
+    <input
+      type="datetime-local"
+      id="scheduleTime"
+      aria-label="Schedule prank datetime"
+      class="w-full p-4 rounded-lg bg-gray-200 dark:bg-gray-800 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12"
+    />
+  </div>
+
+  <!-- Emoji picker box (single shared) -->
+  <div id="emojiBox" role="list" aria-label="Emoji picker">
+    <!-- Categories go here -->
+    <div id="emojiCategories"></div>
+    <!-- Emoji buttons will be appended here -->
+    <div id="emojiList" style="display:flex; flex-wrap: wrap; justify-content: center;"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="flex flex-col items-center space-y-3">
+    <button
+      id="sendBtn"
+      class="w-full p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-xl"
+      aria-label="Send prank message"
+    >🚀 Send Prank</button>
+
+    <button
+      id="spamToggle"
+      class=""
+      aria-pressed="false"
+      title="Toggle Spam Mode: Spam the same message endlessly!"
+      aria-label="Toggle Spam Mode"
+    >
+      🔥 Spam Mode OFF
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="none"/></svg>
+    </button>
+
+    <button
+      id="clearBtn"
+      class="w-full p-4 rounded-lg bg-red-600 hover:bg-red-700 font-bold text-xl"
+      aria-label="Clear form"
+    >🗑️ Clear Form</button>
+  </div>
+
+  <!-- Status Text -->
+  <div id="statusText" class="mt-4 text-center text-gray-700 dark:text-gray-300"></div>
+
+  <!-- Prank Stats -->
+  <div class="mt-8">
+    <h2 class="text-2xl font-semibold">Prank Stats</h2>
+    <div id="prankStats" class="mt-4 text-base">
+      <p>Total Pranks Sent: <span id="totalPranks">0</span></p>
+      <p>Top Emoji: <span id="topEmoji">None</span></p>
+    </div>
+  </div>
+
+  <!-- High Contrast toggle only -->
+  <div class="flex justify-center mt-6">
+    <button id="highContrastToggle" class="p-4 rounded-full bg-gray-700 hover:bg-gray-600 text-white" aria-label="Toggle high contrast mode">👁️ High Contrast</button>
+  </div>
+</div>
+
+<script>
+  // ELEMENTS
+  const messageInput = document.getElementById("messageContent");
+  const embedDescriptionInput = document.getElementById("embedDescription");
+  const sendBtn = document.getElementById("sendBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const statusText = document.getElementById("statusText");
+  const imageInput = document.getElementById("imageURL");
+  const usernameInput = document.getElementById("username");
+  const avatarInput = document.getElementById("avatarURL");
+  const webhookInput = document.getElementById("webhookURL");
+  const embedTitleInput = document.getElementById("embedTitle");
+  const embedColorInput = document.getElementById("embedColor");
+  const scheduleInput = document.getElementById("scheduleTime");
+  const highContrastToggleBtn = document.getElementById("highContrastToggle");
+  const themeBody = document.getElementById("themeBody");
+  const totalPranksElem = document.getElementById("totalPranks");
+  const topEmojiElem = document.getElementById("topEmoji");
+
+  const emojiBox = document.getElementById("emojiBox");
+  const emojiCategoriesDiv = document.getElementById("emojiCategories");
+  const emojiListDiv = document.getElementById("emojiList");
+
+  const emojiToggleMessageBtn = document.getElementById("emojiToggleMessage");
+  const emojiToggleEmbedBtn = document.getElementById("emojiToggleEmbed");
+
+  const avatarUploadInput = document.getElementById("avatarUpload");
+  const avatarUploadBtn = document.getElementById("avatarUploadBtn");
+  const avatarPreviewContainer = document.getElementById("avatarPreviewContainer");
+  const avatarPreviewImg = document.getElementById("avatarPreview");
+  const clearAvatarBtn = document.getElementById("clearAvatarBtn");
+
+  const imageUploadInput = document.getElementById("imageUpload");
+  const imageUploadBtn = document.getElementById("imageUploadBtn");
+  const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+  const imagePreviewImg = document.getElementById("imagePreview");
+  const clearImageBtn = document.getElementById("clearImageBtn");
+
+  const spamToggleBtn = document.getElementById("spamToggle");
+
+  // DATA
+  let cooldown = false;
+  let spamMode = false;
+  let spamIntervalId = null;
+
+  let activeEmojiTarget = null;
+
+  // Emoji data
+  const emojis = {
+    Smileys: ["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗"],
+    Animals: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🐣"],
+    Food: ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦"],
+    Favorites: JSON.parse(localStorage.getItem("favoriteEmojis")) || [],
+  };
+
+  let selectedCategory = "Smileys";
+
+  // Render categories buttons
+function renderEmojiCategories() {
+  emojiCategoriesDiv.innerHTML = "";
+  Object.keys(emojis).forEach(cat => {
+    const btn = document.createElement("button");
+    btn.textContent = cat === "Favorites" ? "⭐" : cat;
+    btn.className = (cat === selectedCategory ? "active" : "");
+    btn.setAttribute("aria-pressed", cat === selectedCategory ? "true" : "false");
+
+    btn.onclick = (e) => {
+      // prevent emojiBox from hiding on category click by just changing category and re-rendering emojis
+      selectedCategory = cat;
+      renderEmojiCategories();
+      renderEmojiList();
+
+      // Keep emoji picker open and reposition it relative to active toggle button
+      if (emojiBox.style.display === "block") {
+        const btnRef = activeEmojiTarget === messageInput ? emojiToggleMessageBtn : emojiToggleEmbedBtn;
+        positionEmojiBox(btnRef);
+      }
     };
 
-    const webhookInput = document.getElementById("webhookURL");
-    const usernameInput = document.getElementById("username");
-    const avatarInput = document.getElementById("avatarURL");
-    const avatarUploadInput = document.getElementById("avatarUploadInput");
-    const avatarPreview = document.getElementById("avatarPreview");
-    const messageInput = document.getElementById("messageContent");
-    const imageInput = document.getElementById("imageURL");
-    const uploadInput = document.getElementById("uploadInput");
-    const imagePreview = document.getElementById("imagePreview");
-    const emojiBox = document.getElementById("emojiBox");
-    const emojiList = document.getElementById("emojiList");
-    const categoryTabs = document.getElementById("categoryTabs");
-    const emojiSearch = document.getElementById("emojiSearch");
-    const sendBtn = document.getElementById("sendBtn");
-    const emojiToggle = document.getElementById("emojiToggle");
-    const clickSound = document.getElementById("clickSound");
-    const sendSound = document.getElementById("sendSound");
-    const statusText = document.getElementById("status");
-    const themeToggle = document.getElementById("themeToggle");
-    const themeBody = document.getElementById("themeBody");
-    const messageHistory = document.getElementById("messageHistory");
+    emojiCategoriesDiv.appendChild(btn);
+  });
+}
 
-    let selectedCategory = null;
-    let cooldown = false;
-    let isDarkTheme = true;
-    let history = JSON.parse(localStorage.getItem("prankHistory")) || [];
+  // Render emojis list
+  function renderEmojiList() {
+    emojiListDiv.innerHTML = "";
+    emojis[selectedCategory].forEach(emoji => {
+      const container = document.createElement("span");
+      container.className = "emoji-btn-container";
+      container.style.position = "relative";
 
-    function loadSettings() {
-      const webhook = localStorage.getItem("prankWebhook");
-      const username = localStorage.getItem("prankUsername");
-      const avatar = localStorage.getItem("prankAvatar");
-      if (webhook) webhookInput.value = webhook;
-      if (username) usernameInput.value = username;
-      if (avatar) {
-        avatarInput.value = avatar;
-        avatarPreview.src = avatar;
-        avatarPreview.classList.remove("hidden");
-      }
-      updateHistory();
-    }
+      const emojiBtn = document.createElement("button");
+      emojiBtn.textContent = emoji;
+      emojiBtn.title = emoji;
+      emojiBtn.className = "select-none";
+      emojiBtn.setAttribute("aria-label", `Emoji ${emoji}`);
 
-    function saveSettings() {
-      localStorage.setItem("prankWebhook", webhookInput.value);
-      localStorage.setItem("prankUsername", usernameInput.value);
-      localStorage.setItem("prankAvatar", avatarInput.value);
-    }
-
-    function updateHistory() {
-      messageHistory.innerHTML = "";
-      history.forEach((msg, index) => {
-        const div = document.createElement("div");
-        div.className = "p-4 bg-gray-800 rounded-lg";
-        div.innerHTML = `
-          <p class="text-base">${msg.username || "Anonymous"}: ${msg.content || "(Image only)"}</p>
-          ${msg.image ? `<img src="${msg.image}" class="max-w-full h-24 rounded mt-2" />` : ""}
-          <button class="text-sm text-indigo-400 hover:underline" onclick="repostMessage(${index})">Repost</button>
-        `;
-        messageHistory.prepend(div);
-      });
-    }
-
-    function repostMessage(index) {
-      const msg = history[index];
-      messageInput.value = msg.content || "";
-      imageInput.value = msg.image || "";
-      if (msg.image) {
-        imagePreview.src = msg.image;
-        imagePreview.classList.remove("hidden");
-      }
-      usernameInput.value = msg.username || "";
-      avatarInput.value = msg.avatar || "";
-      if (msg.avatar) {
-        avatarPreview.src = msg.avatar;
-        avatarPreview.classList.remove("hidden");
-      }
-    }
-
-    function initCategories() {
-      categoryTabs.innerHTML = "";
-      const categories = Object.keys(emojis);
-      categories.forEach((cat, index) => {
-        const tab = document.createElement("span");
-        tab.className = "px-4 py-2 rounded-lg cursor-pointer text-white inline-block";
-        tab.innerText = cat;
-        tab.onclick = () => {
-          selectedCategory = cat;
-          updateEmojiList();
-          updateActiveTab();
-          emojiSearch.value = "";
-        };
-        if (index > 0) categoryTabs.appendChild(document.createTextNode(" | "));
-        categoryTabs.appendChild(tab);
-      });
-      selectedCategory = categories[0];
-      updateEmojiList();
-      updateActiveTab();
-    }
-
-    function updateActiveTab() {
-      const tabs = categoryTabs.getElementsByTagName("span");
-      for (let tab of tabs) {
-        tab.classList.toggle("bg-indigo-500", tab.innerText === selectedCategory);
-        tab.classList.toggle("bg-indigo-600", tab.innerText !== selectedCategory);
-        tab.classList.toggle("hover:bg-indigo-700", true);
-      }
-    }
-
-    function updateEmojiList() {
-      emojiList.innerHTML = "";
-      if (!selectedCategory) return;
-      const searchTerm = emojiSearch.value.toLowerCase();
-      const list = emojis[selectedCategory].filter(e => e.includes(searchTerm) || searchTerm === "");
-      if (list.length === 0) {
-        emojiList.innerHTML = '<p class="text-base text-gray-500 p-4">No emojis found.</p>';
-        return;
-      }
-      list.forEach(emoji => {
-        const btn = document.createElement("button");
-        btn.className = "emoji-button text-4xl p-4 m-2 bg-gray-700 rounded-lg hover:bg-gray-600";
-        btn.innerText = emoji;
-        btn.onclick = () => {
-          addEmoji(emoji);
-          playClickSound();
-        };
-        emojiList.appendChild(btn);
-      });
-    }
-
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+      emojiBtn.onclick = () => {
+        addEmoji(emoji);
+        addFavoriteEmoji(emoji);
       };
-    }
 
-    const filterEmojis = debounce(updateEmojiList, 200);
+      container.appendChild(emojiBtn);
 
-    function addEmoji(emoji) {
-      const textarea = messageInput;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = textarea.value;
-      textarea.value = text.slice(0, start) + emoji + text.slice(end);
-      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
-      textarea.focus();
-    }
+      // Favorite star toggle, only if not Favorites category
+      if (selectedCategory !== "Favorites") {
+        const starBtn = document.createElement("button");
+        starBtn.className = "emoji-fav-star";
+        starBtn.textContent = emojis.Favorites.includes(emoji) ? "★" : "☆";
+        if (!emojis.Favorites.includes(emoji)) starBtn.classList.add("inactive");
+        starBtn.title = emojis.Favorites.includes(emoji) ? "Remove from favorites" : "Add to favorites";
 
-    function toggleEmojiBox() {
-      if (emojiBox.style.display === "flex") {
-        emojiBox.style.display = "none";
-      } else {
-        emojiBox.style.display = "flex";
-        positionEmojiBox();
-        emojiSearch.value = "";
-        updateEmojiList();
+        starBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggleFavoriteEmoji(emoji);
+        };
+
+        container.appendChild(starBtn);
       }
-      playClickSound();
-    }
 
-    function positionEmojiBox() {
-      const toggleBtn = emojiToggle;
-      const rect = toggleBtn.getBoundingClientRect();
+      emojiListDiv.appendChild(container);
+    });
+  }
+
+  // Add emoji to active input
+  function addEmoji(emoji) {
+    if (!activeEmojiTarget) activeEmojiTarget = messageInput;
+    const target = activeEmojiTarget;
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    const val = target.value;
+    target.value = val.slice(0, start) + emoji + val.slice(end);
+    target.focus();
+    target.selectionStart = target.selectionEnd = start + emoji.length;
+  }
+
+  // Add to favorites
+  function addFavoriteEmoji(emoji) {
+    if (!emojis.Favorites.includes(emoji)) {
+      emojis.Favorites.push(emoji);
+      localStorage.setItem("favoriteEmojis", JSON.stringify(emojis.Favorites));
+      if (selectedCategory === "Favorites") renderEmojiList();
+    }
+  }
+
+  // Toggle favorites
+  function toggleFavoriteEmoji(emoji) {
+    const idx = emojis.Favorites.indexOf(emoji);
+    if (idx === -1) {
+      emojis.Favorites.push(emoji);
+    } else {
+      emojis.Favorites.splice(idx, 1);
+    }
+    localStorage.setItem("favoriteEmojis", JSON.stringify(emojis.Favorites));
+    renderEmojiList();
+  }
+
+  // Position emoji picker near button
+  function positionEmojiBox(relativeTo) {
+    if (window.innerWidth <= 640) {
+      emojiBox.style.left = "5%";
+      emojiBox.style.top = "auto";
+      emojiBox.style.bottom = "10px";
+    } else {
+      const rect = relativeTo.getBoundingClientRect();
       emojiBox.style.left = `${rect.left}px`;
       emojiBox.style.top = `${window.scrollY + rect.bottom + 5}px`;
+      emojiBox.style.bottom = "auto";
     }
+  }
 
-    function updateEmojiTheme() {
-      if (isDarkTheme) {
-        emojiBox.classList.remove("bg-gray-100", "text-gray-900");
-        emojiBox.classList.add("bg-gray-800", "text-white");
-        emojiSearch.classList.remove("bg-white", "border-gray-300");
-        emojiSearch.classList.add("bg-gray-700", "border-gray-600");
-        emojiList.classList.remove("text-gray-900");
-        emojiList.classList.add("text-white");
-      } else {
-        emojiBox.classList.remove("bg-gray-800", "text-white");
-        emojiBox.classList.add("bg-gray-100", "text-gray-900");
-        emojiSearch.classList.remove("bg-gray-700", "border-gray-600");
-        emojiSearch.classList.add("bg-white", "border-gray-300");
-        emojiList.classList.remove("text-white");
-        emojiList.classList.add("text-gray-900");
-      }
-    }
-
-    function playClickSound() {
-      clickSound.currentTime = 0;
-      clickSound.play().catch(() => console.log("Click sound failed to play"));
-    }
-
-    function playSendSound() {
-      sendSound.currentTime = 0;
-      sendSound.play().catch(() => console.log("Send sound failed to play"));
-    }
-
-    function uploadImageToImgbb(file) {
-      statusText.innerText = "⏳ Uploading image...";
-      return new Promise((resolve, reject) => {
-        if (!file.type.match(/^image\/(png|jpeg|jpg|gif|webp)$/)) {
-          statusText.innerText = "❌ Only PNG, JPEG, GIF, or WebP images are allowed.";
-          reject(new Error("Invalid file type"));
-          return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-          statusText.innerText = "❌ File size exceeds 5MB limit.";
-          reject(new Error("File too large"));
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          const formData = new FormData();
-          formData.append("image", base64);
-          fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
-            method: "POST",
-            body: formData,
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.data && data.data.url) {
-              statusText.innerText = "✅ Image uploaded successfully!";
-              resolve(data.data.url);
-            } else {
-              statusText.innerText = `❌ Upload failed: ${data.error ? data.error.message : "Unknown error"}`;
-              reject(new Error("Upload failed"));
-            }
-          })
-          .catch(err => {
-            statusText.innerText = "❌ Upload error. Check your network or API key.";
-            console.error("Image upload error:", err);
-            reject(err);
-          });
-        };
-        reader.onerror = () => {
-          statusText.innerText = "❌ Failed to read image file.";
-          reject(new Error("Failed to read image"));
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function sendPrank() {
-      if (cooldown) {
-        statusText.innerText = "⏳ Please wait, cooldown in effect.";
-        return;
-      }
-      cooldown = true;
-      sendBtn.disabled = true;
-      sendBtn.classList.add("bounce");
+  // Toggle emoji picker for message input
+  emojiToggleMessageBtn.addEventListener("click", () => {
+    if (emojiBox.style.display === "block" && activeEmojiTarget === messageInput) {
+      emojiBox.classList.add("hide");
       setTimeout(() => {
-        cooldown = false;
-        sendBtn.disabled = false;
-        sendBtn.classList.remove("bounce");
-      }, 1000);
+        emojiBox.style.display = "none";
+        emojiBox.classList.remove("hide");
+      }, 150);
+      activeEmojiTarget = null;
+    } else {
+      activeEmojiTarget = messageInput;
+      emojiBox.style.display = "block";
+      emojiBox.classList.remove("hide");
+      positionEmojiBox(emojiToggleMessageBtn);
+    }
+  });
 
-      const url = webhookInput.value.trim();
-      const content = messageInput.value.trim();
-      const username = usernameInput.value.trim();
-      const avatar_url = avatarInput.value.trim();
-      const image_url = imageInput.value.trim();
+  // Toggle emoji picker for embed description input
+  emojiToggleEmbedBtn.addEventListener("click", () => {
+    if (emojiBox.style.display === "block" && activeEmojiTarget === embedDescriptionInput) {
+      emojiBox.classList.add("hide");
+      setTimeout(() => {
+        emojiBox.style.display = "none";
+        emojiBox.classList.remove("hide");
+      }, 150);
+      activeEmojiTarget = null;
+    } else {
+      activeEmojiTarget = embedDescriptionInput;
+      emojiBox.style.display = "block";
+      emojiBox.classList.remove("hide");
+      positionEmojiBox(emojiToggleEmbedBtn);
+    }
+  });
 
-      if (!url) {
-        statusText.innerText = "❌ Please enter a valid webhook URL.";
-        sendBtn.disabled = false;
-        cooldown = false;
-        return;
-      }
-      if (!content && !image_url) {
-        statusText.innerText = "❌ Please enter a message or an image URL.";
-        sendBtn.disabled = false;
-        cooldown = false;
-        return;
-      }
+  // Close emoji picker on clicking outside
+  document.addEventListener("click", (e) => {
+    if (!emojiBox.contains(e.target) &&
+        e.target !== emojiToggleMessageBtn &&
+        e.target !== emojiToggleEmbedBtn) {
+      emojiBox.classList.add("hide");
+      setTimeout(() => {
+        emojiBox.style.display = "none";
+        emojiBox.classList.remove("hide");
+      }, 150);
+      activeEmojiTarget = null;
+    }
+  });
 
-      saveSettings();
+  // Resize reposition emoji picker if open
+  window.addEventListener("resize", () => {
+    if (emojiBox.style.display === "block" && activeEmojiTarget) {
+      const btn = activeEmojiTarget === messageInput ? emojiToggleMessageBtn : emojiToggleEmbedBtn;
+      positionEmojiBox(btn);
+    }
+  });
 
-      const payload = {
-        username: username || undefined,
-        avatar_url: avatar_url || undefined,
-      };
-      if (content) payload.content = content;
-      if (image_url) {
-        payload.embeds = [{ image: { url: image_url } }];
-      }
+  // Avatar image upload preview and clear
+  avatarUploadBtn.addEventListener("click", () => avatarUploadInput.click());
+  avatarUploadInput.addEventListener("change", () => {
+    const file = avatarUploadInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      avatarPreviewImg.src = e.target.result;
+      avatarPreviewContainer.style.display = "inline-block";
+      avatarInput.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  clearAvatarBtn.addEventListener("click", () => {
+    avatarPreviewImg.src = "";
+    avatarPreviewContainer.style.display = "none";
+    avatarInput.value = "";
+    avatarUploadInput.value = "";
+  });
 
-      console.log("Sending payload:", JSON.stringify(payload, null, 2));
+  // Embed image upload preview and clear
+  imageUploadBtn.addEventListener("click", () => imageUploadInput.click());
+  imageUploadInput.addEventListener("change", () => {
+    const file = imageUploadInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      imagePreviewImg.src = e.target.result;
+      imagePreviewContainer.style.display = "inline-block";
+      imageInput.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  clearImageBtn.addEventListener("click", () => {
+    imagePreviewImg.src = "";
+    imagePreviewContainer.style.display = "none";
+    imageInput.value = "";
+    imageUploadInput.value = "";
+  });
 
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+  // Sanitize input for safety (simple version)
+  function sanitizeInput(str) {
+    return str.replace(/[<>]/g, "");
+  }
+
+  // Spam Mode toggle
+  spamToggleBtn.addEventListener("click", () => {
+    spamMode = !spamMode;
+    if (spamMode) {
+      spamToggleBtn.classList.add("spam-active");
+      spamToggleBtn.innerHTML = `🔥 Spam Mode ON <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>`;
+      sendBtn.disabled = false; // always enabled
+    } else {
+      spamToggleBtn.classList.remove("spam-active");
+      spamToggleBtn.textContent = "🔥 Spam Mode OFF";
+      cooldown = false; // reset cooldown if off
+    }
+  });
+
+  // SEND PRANK LOGIC
+  async function sendPrankNow() {
+    const webhook = webhookInput.value.trim();
+    if (!webhook) {
+      statusText.innerText = "❌ Please enter a webhook URL.";
+      return false;
+    }
+    if (messageInput.value.length > 2000) {
+      statusText.innerText = "❌ Message exceeds 2000 characters.";
+      return false;
+    }
+
+    cooldown = !spamMode; // cooldown only if spamMode off
+    if (cooldown) {
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="loader"></span> Sending...';
+    }
+
+    const content = sanitizeInput(messageInput.value.trim());
+    const username = sanitizeInput(usernameInput.value.trim());
+    const avatar_url = sanitizeInput(avatarInput.value.trim());
+    const image_url = sanitizeInput(imageInput.value.trim());
+    const embedTitle = sanitizeInput(embedTitleInput.value.trim());
+    const embedDescription = sanitizeInput(embedDescriptionInput.value.trim());
+    const embedColor = parseInt(embedColorInput.value?.replace("#", "") || "5865F2", 16);
+
+    let payload = {};
+    if (content) payload.content = content;
+    if (username) payload.username = username;
+    if (avatar_url) payload.avatar_url = avatar_url;
+    if (embedTitle || embedDescription || image_url) {
+      payload.embeds = [{
+        title: embedTitle || undefined,
+        description: embedDescription || undefined,
+        color: embedColor || undefined,
+        image: image_url ? { url: image_url } : undefined,
+      }];
+    }
+
+    try {
+      const res = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        statusText.innerText = "✅ Sent successfully!";
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
         });
+        trackPrank(content);
+        updateStats();
+      } else if (res.status === 429) {
+        const json = await res.json();
+        const retryAfter = json.retry_after || 1000;
+        statusText.innerText = `⏳ Rate limit exceeded. Retry after ${retryAfter / 1000} seconds.`;
+        setTimeout(() => { statusText.innerText = ""; }, retryAfter);
+      } else {
+        statusText.innerText = `❌ Error: HTTP ${res.status}`;
+      }
+    } catch (e) {
+      statusText.innerText = `❌ Network error: ${e.message}`;
+    }
 
-        if (res.ok) {
-          statusText.innerText = "✅ Sent successfully!";
-          playSendSound();
-          history.push({ content, image: image_url, username, avatar: avatar_url });
-          localStorage.setItem("prankHistory", JSON.stringify(history.slice(-10)));
-          updateHistory();
-          messageInput.value = "";
-          imageInput.value = "";
-          imagePreview.classList.add("hidden");
-        } else {
-          const errorData = await res.json();
-          console.error("Webhook error:", errorData);
-          statusText.innerText = `❌ Failed to send. HTTP ${res.status}: ${errorData.message || "Unknown error"}`;
-          if (res.status === 400 && errorData.code === 50006) {
-            statusText.innerText += " (Cannot send an empty message. Ensure content or image is provided.)";
-          } else if (res.status === 429) {
-            statusText.innerText += " (Rate limit exceeded. Try again later.)";
-          } else if (res.status === 404) {
-            statusText.innerText += " (Webhook URL invalid or deleted. Please check the URL.)";
-          }
-        }
-      } catch (e) {
-        statusText.innerText = `❌ Network error: ${e.message}`;
-        console.error("Network error:", e);
+    if (!spamMode) {
+      cooldown = false;
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = "🚀 Send Prank";
+    }
+
+    return true;
+  }
+
+  // Send with optional scheduling
+  async function sendPrank() {
+    if (cooldown) {
+      statusText.innerText = "⏳ Please wait, cooldown in effect.";
+      return;
+    }
+
+    const scheduleTime = scheduleInput.value;
+    if (scheduleTime) {
+      const scheduleDate = new Date(scheduleTime);
+      const now = new Date();
+      if (scheduleDate > now) {
+        statusText.innerText = `⏰ Prank scheduled for ${scheduleDate.toLocaleString()}`;
+        setTimeout(() => {
+          sendPrankNow();
+        }, scheduleDate - now);
+        return;
+      } else {
+        statusText.innerText = "❌ Schedule time must be in the future.";
+        return;
       }
     }
 
-    uploadInput.addEventListener("change", async () => {
-      if (!uploadInput.files || !uploadInput.files[0]) return;
-      try {
-        const file = uploadInput.files[0];
-        const imageUrl = await uploadImageToImgbb(file);
-        imageInput.value = imageUrl;
-        imagePreview.src = imageUrl;
-        imagePreview.classList.remove("hidden");
-      } catch {
-        // Error handled in uploadImageToImgbb
-      }
-      uploadInput.value = "";
-    });
+    const sent = await sendPrankNow();
 
-    avatarUploadInput.addEventListener("change", async () => {
-      if (!avatarUploadInput.files || !avatarUploadInput.files[0]) return;
-      try {
-        const file = avatarUploadInput.files[0];
-        const imageUrl = await uploadImageToImgbb(file);
-        avatarInput.value = imageUrl;
-        avatarPreview.src = imageUrl;
-        avatarPreview.classList.remove("hidden");
-        statusText.innerText = "✅ Avatar image uploaded!";
-      } catch {
-        // Error handled in uploadImageToImgbb
-      }
-      avatarUploadInput.value = "";
-    });
+    // If Spam Mode ON, enable repeated sends on clicking send btn
+    if (spamMode && sent) {
+      // nothing needed, user can spam clicking send
+      // cooldown disabled in spamMode
+    }
+  }
 
-    messageInput.addEventListener("paste", async (e) => {
-      const clipboardItems = e.clipboardData.items;
-      for (const item of clipboardItems) {
-        if (item.type.startsWith("image")) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (file) {
-            try {
-              const imageUrl = await uploadImageToImgbb(file);
-              imageInput.value = imageUrl;
-              imagePreview.src = imageUrl;
-              imagePreview.classList.remove("hidden");
-              statusText.innerText = "✅ Pasted image uploaded!";
-            } catch {
-              // Error handled in uploadImageToImgbb
-            }
-          }
-          break;
+  sendBtn.addEventListener("click", sendPrank);
+
+  // Test webhook button
+  document.getElementById("testWebhook").addEventListener("click", async () => {
+    const url = webhookInput.value.trim();
+    if (!url) {
+      statusText.innerText = "❌ Please enter a webhook URL.";
+      return;
+    }
+    try {
+      const res = await fetch(url, { method: "POST", body: JSON.stringify({content:"Webhook test"}), headers: {"Content-Type": "application/json"}});
+      if (res.ok) {
+        statusText.innerText = "✅ Webhook is valid!";
+      } else {
+        statusText.innerText = `❌ Invalid webhook: HTTP ${res.status}`;
+      }
+    } catch (e) {
+      statusText.innerText = `❌ Error validating webhook: ${e.message}`;
+    }
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "Enter" && !cooldown) {
+      sendPrank();
+    }
+    if (e.ctrlKey && e.key.toLowerCase() === "e") {
+      if (emojiBox.style.display === "block") {
+        emojiBox.classList.add("hide");
+        setTimeout(() => {
+          emojiBox.style.display = "none";
+          emojiBox.classList.remove("hide");
+        }, 150);
+        activeEmojiTarget = null;
+      } else {
+        activeEmojiTarget = messageInput;
+        emojiBox.style.display = "block";
+        emojiBox.classList.remove("hide");
+        positionEmojiBox(emojiToggleMessageBtn);
+      }
+      e.preventDefault();
+    }
+  });
+
+  // Track prank stats
+  const prankStats = JSON.parse(localStorage.getItem("prankStats")) || { totalSent: 0, emojisUsed: {} };
+  function trackPrank(content) {
+    prankStats.totalSent++;
+    for (const cat of Object.keys(emojis)) {
+      if (cat === "Favorites") continue;
+      for (const emoji of emojis[cat]) {
+        if (content.includes(emoji)) {
+          prankStats.emojisUsed[emoji] = (prankStats.emojisUsed[emoji] || 0) + 1;
         }
       }
-    });
+    }
+    localStorage.setItem("prankStats", JSON.stringify(prankStats));
+  }
+  function updateStats() {
+    totalPranksElem.textContent = prankStats.totalSent;
+    const entries = Object.entries(prankStats.emojisUsed);
+    if (entries.length === 0) {
+      topEmojiElem.textContent = "None";
+      return;
+    }
+    const topEmoji = entries.sort((a,b) => b[1] - a[1])[0];
+    topEmojiElem.textContent = `${topEmoji[0]} (${topEmoji[1]} uses)`;
+  }
+  updateStats();
 
-    avatarInput.addEventListener("paste", async (e) => {
-      if (!e.clipboardData) return;
-      const clipboardItems = e.clipboardData.items;
-      for (const item of clipboardItems) {
-        if (item.type.startsWith("image")) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (file) {
-            try {
-              const imageUrl = await uploadImageToImgbb(file);
-              avatarInput.value = imageUrl;
-              avatarPreview.src = imageUrl;
-              avatarPreview.classList.remove("hidden");
-              statusText.innerText = "✅ Pasted avatar uploaded!";
-            } catch {
-              // Error handled in uploadImageToImgbb
-            }
-          }
-          break;
-        }
-      }
-    });
+  // High Contrast toggle
+  highContrastToggleBtn.addEventListener("click", () => {
+    themeBody.classList.toggle("high-contrast");
+  });
 
-    emojiToggle.addEventListener("click", toggleEmojiBox);
-    emojiSearch.addEventListener("input", filterEmojis);
+  // Initialize emoji picker
+  renderEmojiCategories();
+  renderEmojiList();
+</script>
 
-    themeToggle.addEventListener("click", () => {
-      isDarkTheme = !isDarkTheme;
-      themeBody.classList.toggle("bg-gray-900", isDarkTheme);
-      themeBody.classList.toggle("text-white", isDarkTheme);
-      themeBody.classList.toggle("bg-gray-100", !isDarkTheme);
-      themeBody.classList.toggle("text-gray-900", !isDarkTheme);
-      themeToggle.innerText = isDarkTheme ? "🌙" : "☀️";
-      updateEmojiTheme();
-    });
-
-    window.onload = () => {
-      loadSettings();
-      initCategories();
-      updateEmojiTheme();
-      window.addEventListener("resize", positionEmojiBox);
-    };
-
-    window.addEventListener("click", (e) => {
-      if (!emojiBox.contains(e.target) && e.target !== emojiToggle) {
-        emojiBox.style.display = "none";
-      }
-    });
-
-    sendBtn.addEventListener("click", sendPrank);
-  </script>
 </body>
 </html>
