@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prank Hub Deluxe ⭐</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" /> <!-- Replace "favicon.ico" with your custom icon file name -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .emoji-button:hover {
+      transform: scale(1.2);
+      transition: transform 0.15s;
+    }
+    #emojiBox {
+      max-width: 600px;
+      min-height: 250px;
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #888 #fff;
+    }
+    .bounce {
+      animation: bounce 0.3s ease;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .theme-transition {
+      transition: background-color 0.3s, color 0.3s;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8 font-sans theme-transition" id="themeBody">
+  <div>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold">⭐ Prank Hub Deluxe</h1>
+      <button id="themeToggle" class="p-4 rounded-full bg-gray-700 hover:bg-gray-600" title="Toggle Theme">
+        🌙
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      <div>
+        <label class="block text-base font-medium mb-2">Webhook URL</label>
+        <input type="text" id="webhookURL" placeholder="Paste your webhook URL here" 
+               class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
+      </div>
+
+      <div>
+        <label class="block text-base font-medium mb-2">Username (optional)</label>
+        <input type="text" id="username" placeholder="Name for the prankster bot" 
+               class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
+      </div>
+
+      <div>
+        <label class="block text-base font-medium mb-2">Avatar URL (optional)</label>
+        <div class="flex gap-4 w-full">
+          <input type="text" id="avatarURL" placeholder="Link to profile picture" 
+                 class="flex-grow p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
+          <label for="avatarUploadInput" class="cursor-pointer p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-center h-12 flex items-center justify-center">
+            📁
+          </label>
+        </div>
+        <input type="file" id="avatarUploadInput" accept="image/*" class="hidden" />
+        <img id="avatarPreview" class="mt-4 max-w-full h-32 rounded-lg hidden" />
+      </div>
+
+      <div>
+        <label class="block text-base font-medium mb-2">Message Content</label>
+        <textarea id="messageContent" placeholder="Type your prank here..." 
+                  class="w-full p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-40 resize-none"></textarea>
+        <button id="emojiToggle" class="mt-4 p-4 rounded-lg bg-gray-700 hover:bg-gray-600 text-xl">😊 Emoji</button>
+        <div id="emojiBox" class="hidden absolute rounded-lg shadow-lg p-6 z-20 max-w-sm theme-transition" data-theme="dark">
+          <input type="text" id="emojiSearch" placeholder="Search emojis..." 
+                 class="w-full p-3 rounded-lg border mb-4 h-12" />
+          <div id="categoryTabs" class="text-base mb-4"></div>
+          <div id="emojiList" class="flex flex-row flex-wrap"></div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-base font-medium mb-2">Image URL (optional)</label>
+        <div class="flex gap-4 w-full">
+          <input type="text" id="imageURL" placeholder="Paste image URL here" 
+                 class="flex-grow p-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-12" />
+          <label for="uploadInput" class="cursor-pointer p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-center h-12 flex items-center justify-center">
+            📁
+          </label>
+        </div>
+        <input type="file" id="uploadInput" accept="image/*" class="hidden" />
+        <img id="imagePreview" class="mt-4 max-w-full h-64 rounded-lg hidden" />
+      </div>
+
+      <button id="sendBtn" class="w-full p-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 font-bold text-xl">
+        🚀 Send Prank
+      </button>
+
+      <div id="status" class="text-base"></div>
+
+      <div class="mt-8">
+        <h2 class="text-2xl font-semibold">Message History</h2>
+        <div id="messageHistory" class="mt-4 space-y-4 max-h-80 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <audio id="clickSound" src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3"></audio>
+    <audio id="sendSound" src="https://freesound.org/data/previews/256/256120_3263906-lq.mp3"></audio>
+  </div>
+
+  <script>
+    const imgbbApiKey = 'db63980b68f6c4c526f3388f74d0b16a'; // Provided imgbb API key
+
+    const emojis = {
+      Smileys: ["😀", "😂", "😍", "😎", "😢", "😈", "🥳", "🤓", "😜", "😡", "😊", "😉", "😘", "🤗", "😴", "🤪", "😬", "😷"],
+      Animals: ["🐶", "🐱", "🦁", "🐘", "🦒", "🐻", "🦊", "🐸", "🐵", "🦄", "🐷", "🐼", "🐨", "🐰", "🦓", "🐮", "🐴", "🐦"],
+      Objects: ["🎉", "💡", "📱", "💻", "🎮", "📷", "🎸", "🚗", "✈️", "🔥", "🪩", "🎁", "🎈", "📚", "🖌️", "🔧", "⚙️", "🔔"],
+      Food: ["🍕", "🍔", "🍟", "🍦", "🍎", "🍉", "🍫", "🍿", "🍣", "🥐", "🍰", "🥞", "🍜", "🥗", "🍎", "🍒", "🍓"],
+      Symbols: ["✅", "❌", "❓", "⚠️", "🚫", "🔄", "💯", "⭐", "🎯", "🔮", "➡️", "⬅️", "⬆️", "⬇️", "🔒", "🔓", "❤️", "💔"],
+      Activities: ["⚽", "🏀", "🎾", "🏈", "🎳", "🎯", "🎸", "🎨", "🎭", "🎲", "🏋️", "🚴", "🏄", "🎿", "🏊", "🧘", "🎤", "🎬"]
+    };
+
+    const webhookInput = document.getElementById("webhookURL");
+    const usernameInput = document.getElementById("username");
+    const avatarInput = document.getElementById("avatarURL");
+    const avatarUploadInput = document.getElementById("avatarUploadInput");
+    const avatarPreview = document.getElementById("avatarPreview");
+    const messageInput = document.getElementById("messageContent");
+    const imageInput = document.getElementById("imageURL");
+    const uploadInput = document.getElementById("uploadInput");
+    const imagePreview = document.getElementById("imagePreview");
+    const emojiBox = document.getElementById("emojiBox");
+    const emojiList = document.getElementById("emojiList");
+    const categoryTabs = document.getElementById("categoryTabs");
+    const emojiSearch = document.getElementById("emojiSearch");
+    const sendBtn = document.getElementById("sendBtn");
+    const emojiToggle = document.getElementById("emojiToggle");
+    const clickSound = document.getElementById("clickSound");
+    const sendSound = document.getElementById("sendSound");
+    const statusText = document.getElementById("status");
+    const themeToggle = document.getElementById("themeToggle");
+    const themeBody = document.getElementById("themeBody");
+    const messageHistory = document.getElementById("messageHistory");
+
+    let selectedCategory = null;
+    let cooldown = false;
+    let isDarkTheme = true;
+    let history = JSON.parse(localStorage.getItem("prankHistory")) || [];
+
+    function loadSettings() {
+      const webhook = localStorage.getItem("prankWebhook");
+      const username = localStorage.getItem("prankUsername");
+      const avatar = localStorage.getItem("prankAvatar");
+      if (webhook) webhookInput.value = webhook;
+      if (username) usernameInput.value = username;
+      if (avatar) {
+        avatarInput.value = avatar;
+        avatarPreview.src = avatar;
+        avatarPreview.classList.remove("hidden");
+      }
+      updateHistory();
+    }
+
+    function saveSettings() {
+      localStorage.setItem("prankWebhook", webhookInput.value);
+      localStorage.setItem("prankUsername", usernameInput.value);
+      localStorage.setItem("prankAvatar", avatarInput.value);
+    }
+
+    function updateHistory() {
+      messageHistory.innerHTML = "";
+      history.forEach((msg, index) => {
+        const div = document.createElement("div");
+        div.className = "p-4 bg-gray-800 rounded-lg";
+        div.innerHTML = `
+          <p class="text-base">${msg.username || "Anonymous"}: ${msg.content || "(Image only)"}</p>
+          ${msg.image ? `<img src="${msg.image}" class="max-w-full h-24 rounded mt-2" />` : ""}
+          <button class="text-sm text-indigo-400 hover:underline" onclick="repostMessage(${index})">Repost</button>
+        `;
+        messageHistory.prepend(div);
+      });
+    }
+
+    function repostMessage(index) {
+      const msg = history[index];
+      messageInput.value = msg.content || "";
+      imageInput.value = msg.image || "";
+      if (msg.image) {
+        imagePreview.src = msg.image;
+        imagePreview.classList.remove("hidden");
+      }
+      usernameInput.value = msg.username || "";
+      avatarInput.value = msg.avatar || "";
+      if (msg.avatar) {
+        avatarPreview.src = msg.avatar;
+        avatarPreview.classList.remove("hidden");
+      }
+    }
+
+    function initCategories() {
+      categoryTabs.innerHTML = "";
+      const categories = Object.keys(emojis);
+      categories.forEach((cat, index) => {
+        const tab = document.createElement("span");
+        tab.className = "px-4 py-2 rounded-lg cursor-pointer text-white inline-block";
+        tab.innerText = cat;
+        tab.onclick = () => {
+          selectedCategory = cat;
+          updateEmojiList();
+          updateActiveTab();
+          emojiSearch.value = "";
+        };
+        if (index > 0) categoryTabs.appendChild(document.createTextNode(" | "));
+        categoryTabs.appendChild(tab);
+      });
+      selectedCategory = categories[0];
+      updateEmojiList();
+      updateActiveTab();
+    }
+
+    function updateActiveTab() {
+      const tabs = categoryTabs.getElementsByTagName("span");
+      for (let tab of tabs) {
+        tab.classList.toggle("bg-indigo-500", tab.innerText === selectedCategory);
+        tab.classList.toggle("bg-indigo-600", tab.innerText !== selectedCategory);
+        tab.classList.toggle("hover:bg-indigo-700", true);
+      }
+    }
+
+    function updateEmojiList() {
+      emojiList.innerHTML = "";
+      if (!selectedCategory) return;
+      const searchTerm = emojiSearch.value.toLowerCase();
+      const list = emojis[selectedCategory].filter(e => e.includes(searchTerm) || searchTerm === "");
+      if (list.length === 0) {
+        emojiList.innerHTML = '<p class="text-base text-gray-500 p-4">No emojis found.</p>';
+        return;
+      }
+      list.forEach(emoji => {
+        const btn = document.createElement("button");
+        btn.className = "emoji-button text-4xl p-4 m-2 bg-gray-700 rounded-lg hover:bg-gray-600";
+        btn.innerText = emoji;
+        btn.onclick = () => {
+          addEmoji(emoji);
+          playClickSound();
+        };
+        emojiList.appendChild(btn);
+      });
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    const filterEmojis = debounce(updateEmojiList, 200);
+
+    function addEmoji(emoji) {
+      const textarea = messageInput;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      textarea.value = text.slice(0, start) + emoji + text.slice(end);
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      textarea.focus();
+    }
+
+    function toggleEmojiBox() {
+      if (emojiBox.style.display === "flex") {
+        emojiBox.style.display = "none";
+      } else {
+        emojiBox.style.display = "flex";
+        positionEmojiBox();
+        emojiSearch.value = "";
+        updateEmojiList();
+      }
+      playClickSound();
+    }
+
+    function positionEmojiBox() {
+      const toggleBtn = emojiToggle;
+      const rect = toggleBtn.getBoundingClientRect();
+      emojiBox.style.left = `${rect.left}px`;
+      emojiBox.style.top = `${window.scrollY + rect.bottom + 5}px`;
+    }
+
+    function updateEmojiTheme() {
+      if (isDarkTheme) {
+        emojiBox.classList.remove("bg-gray-100", "text-gray-900");
+        emojiBox.classList.add("bg-gray-800", "text-white");
+        emojiSearch.classList.remove("bg-white", "border-gray-300");
+        emojiSearch.classList.add("bg-gray-700", "border-gray-600");
+        emojiList.classList.remove("text-gray-900");
+        emojiList.classList.add("text-white");
+      } else {
+        emojiBox.classList.remove("bg-gray-800", "text-white");
+        emojiBox.classList.add("bg-gray-100", "text-gray-900");
+        emojiSearch.classList.remove("bg-gray-700", "border-gray-600");
+        emojiSearch.classList.add("bg-white", "border-gray-300");
+        emojiList.classList.remove("text-white");
+        emojiList.classList.add("text-gray-900");
+      }
+    }
+
+    function playClickSound() {
+      clickSound.currentTime = 0;
+      clickSound.play().catch(() => console.log("Click sound failed to play"));
+    }
+
+    function playSendSound() {
+      sendSound.currentTime = 0;
+      sendSound.play().catch(() => console.log("Send sound failed to play"));
+    }
+
+    function uploadImageToImgbb(file) {
+      statusText.innerText = "⏳ Uploading image...";
+      return new Promise((resolve, reject) => {
+        if (!file.type.match(/^image\/(png|jpeg|jpg|gif|webp)$/)) {
+          statusText.innerText = "❌ Only PNG, JPEG, GIF, or WebP images are allowed.";
+          reject(new Error("Invalid file type"));
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          statusText.innerText = "❌ File size exceeds 5MB limit.";
+          reject(new Error("File too large"));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          const formData = new FormData();
+          formData.append("image", base64);
+          fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+            method: "POST",
+            body: formData,
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.data && data.data.url) {
+              statusText.innerText = "✅ Image uploaded successfully!";
+              resolve(data.data.url);
+            } else {
+              statusText.innerText = `❌ Upload failed: ${data.error ? data.error.message : "Unknown error"}`;
+              reject(new Error("Upload failed"));
+            }
+          })
+          .catch(err => {
+            statusText.innerText = "❌ Upload error. Check your network or API key.";
+            console.error("Image upload error:", err);
+            reject(err);
+          });
+        };
+        reader.onerror = () => {
+          statusText.innerText = "❌ Failed to read image file.";
+          reject(new Error("Failed to read image"));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function sendPrank() {
+      if (cooldown) {
+        statusText.innerText = "⏳ Please wait, cooldown in effect.";
+        return;
+      }
+      cooldown = true;
+      sendBtn.disabled = true;
+      sendBtn.classList.add("bounce");
+      setTimeout(() => {
+        cooldown = false;
+        sendBtn.disabled = false;
+        sendBtn.classList.remove("bounce");
+      }, 1000);
+
+      const url = webhookInput.value.trim();
+      const content = messageInput.value.trim();
+      const username = usernameInput.value.trim();
+      const avatar_url = avatarInput.value.trim();
+      const image_url = imageInput.value.trim();
+
+      if (!url) {
+        statusText.innerText = "❌ Please enter a valid webhook URL.";
+        sendBtn.disabled = false;
+        cooldown = false;
+        return;
+      }
+      if (!content && !image_url) {
+        statusText.innerText = "❌ Please enter a message or an image URL.";
+        sendBtn.disabled = false;
+        cooldown = false;
+        return;
+      }
+
+      saveSettings();
+
+      const payload = {
+        username: username || undefined,
+        avatar_url: avatar_url || undefined,
+      };
+      if (content) payload.content = content;
+      if (image_url) {
+        payload.embeds = [{ image: { url: image_url } }];
+      }
+
+      console.log("Sending payload:", JSON.stringify(payload, null, 2));
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          statusText.innerText = "✅ Sent successfully!";
+          playSendSound();
+          history.push({ content, image: image_url, username, avatar: avatar_url });
+          localStorage.setItem("prankHistory", JSON.stringify(history.slice(-10)));
+          updateHistory();
+          messageInput.value = "";
+          imageInput.value = "";
+          imagePreview.classList.add("hidden");
+        } else {
+          const errorData = await res.json();
+          console.error("Webhook error:", errorData);
+          statusText.innerText = `❌ Failed to send. HTTP ${res.status}: ${errorData.message || "Unknown error"}`;
+          if (res.status === 400 && errorData.code === 50006) {
+            statusText.innerText += " (Cannot send an empty message. Ensure content or image is provided.)";
+          } else if (res.status === 429) {
+            statusText.innerText += " (Rate limit exceeded. Try again later.)";
+          } else if (res.status === 404) {
+            statusText.innerText += " (Webhook URL invalid or deleted. Please check the URL.)";
+          }
+        }
+      } catch (e) {
+        statusText.innerText = `❌ Network error: ${e.message}`;
+        console.error("Network error:", e);
+      }
+    }
+
+    uploadInput.addEventListener("change", async () => {
+      if (!uploadInput.files || !uploadInput.files[0]) return;
+      try {
+        const file = uploadInput.files[0];
+        const imageUrl = await uploadImageToImgbb(file);
+        imageInput.value = imageUrl;
+        imagePreview.src = imageUrl;
+        imagePreview.classList.remove("hidden");
+      } catch {
+        // Error handled in uploadImageToImgbb
+      }
+      uploadInput.value = "";
+    });
+
+    avatarUploadInput.addEventListener("change", async () => {
+      if (!avatarUploadInput.files || !avatarUploadInput.files[0]) return;
+      try {
+        const file = avatarUploadInput.files[0];
+        const imageUrl = await uploadImageToImgbb(file);
+        avatarInput.value = imageUrl;
+        avatarPreview.src = imageUrl;
+        avatarPreview.classList.remove("hidden");
+        statusText.innerText = "✅ Avatar image uploaded!";
+      } catch {
+        // Error handled in uploadImageToImgbb
+      }
+      avatarUploadInput.value = "";
+    });
+
+    messageInput.addEventListener("paste", async (e) => {
+      const clipboardItems = e.clipboardData.items;
+      for (const item of clipboardItems) {
+        if (item.type.startsWith("image")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            try {
+              const imageUrl = await uploadImageToImgbb(file);
+              imageInput.value = imageUrl;
+              imagePreview.src = imageUrl;
+              imagePreview.classList.remove("hidden");
+              statusText.innerText = "✅ Pasted image uploaded!";
+            } catch {
+              // Error handled in uploadImageToImgbb
+            }
+          }
+          break;
+        }
+      }
+    });
+
+    avatarInput.addEventListener("paste", async (e) => {
+      if (!e.clipboardData) return;
+      const clipboardItems = e.clipboardData.items;
+      for (const item of clipboardItems) {
+        if (item.type.startsWith("image")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            try {
+              const imageUrl = await uploadImageToImgbb(file);
+              avatarInput.value = imageUrl;
+              avatarPreview.src = imageUrl;
+              avatarPreview.classList.remove("hidden");
+              statusText.innerText = "✅ Pasted avatar uploaded!";
+            } catch {
+              // Error handled in uploadImageToImgbb
+            }
+          }
+          break;
+        }
+      }
+    });
+
+    emojiToggle.addEventListener("click", toggleEmojiBox);
+    emojiSearch.addEventListener("input", filterEmojis);
+
+    themeToggle.addEventListener("click", () => {
+      isDarkTheme = !isDarkTheme;
+      themeBody.classList.toggle("bg-gray-900", isDarkTheme);
+      themeBody.classList.toggle("text-white", isDarkTheme);
+      themeBody.classList.toggle("bg-gray-100", !isDarkTheme);
+      themeBody.classList.toggle("text-gray-900", !isDarkTheme);
+      themeToggle.innerText = isDarkTheme ? "🌙" : "☀️";
+      updateEmojiTheme();
+    });
+
+    window.onload = () => {
+      loadSettings();
+      initCategories();
+      updateEmojiTheme();
+      window.addEventListener("resize", positionEmojiBox);
+    };
+
+    window.addEventListener("click", (e) => {
+      if (!emojiBox.contains(e.target) && e.target !== emojiToggle) {
+        emojiBox.style.display = "none";
+      }
+    });
+
+    sendBtn.addEventListener("click", sendPrank);
+  </script>
+</body>
+</html>
